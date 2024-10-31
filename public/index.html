@@ -46,12 +46,12 @@
     <div class="jackolantern">🎃</div>
     <button class="button" onclick="playJackOLantern()">Activate Jack-o'-Lantern</button>
 
+    <audio id="jackolantern-sound" src="/sound/jackolantern"></audio>
+
     <script>
         function playJackOLantern() {
-            fetch('/play/jackolantern')
-                .then(response => response.text())
-                .then(data => console.log(data))
-                .catch(err => console.error(err));
+            const audio = document.getElementById('jackolantern-sound');
+            audio.play();
         }
     </script>
 </body>
