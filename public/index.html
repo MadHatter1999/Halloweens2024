@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Spooky Jack-o'-Lantern Pet</title>
+    <title>Happy Hallows Eve</title>
     <link href="https://fonts.googleapis.com/css2?family=Creepster&display=swap" rel="stylesheet">
     <style>
         body {
@@ -12,12 +12,13 @@
             color: orange;
             font-family: 'Creepster', cursive;
             text-align: center;
-            overflow: hidden; /* Prevent scrollbars */
+            overflow: hidden;
             margin: 0;
             padding: 0;
         }
         h1 {
             margin-top: 20px;
+            font-size: 50px;
         }
         .jackolantern-container {
             position: relative;
@@ -26,100 +27,166 @@
         }
         .jackolantern {
             position: absolute;
-            bottom: 50px;
-            left: 0;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             font-size: 150px;
             text-shadow: 0 0 25px orange;
             animation: flicker 2s infinite alternate;
             cursor: pointer;
-            transition: transform 0.3s;
+            transition: transform 0.3s, rotate 0.3s;
+        }
+        .status-popup {
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            color: lightcoral;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 5px 10px;
+            border-radius: 5px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .fog-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('/images/fog.png') repeat;
+            opacity: 0.6;
+            animation: fogAnimation 60s linear infinite;
+            pointer-events: none;
         }
         @keyframes flicker {
             0%, 100% { text-shadow: 0 0 25px orange; }
             50% { text-shadow: 0 0 35px red; }
         }
-        .status {
-            font-size: 24px;
-            margin-top: 20px;
-            color: lightcoral;
+        @keyframes fogAnimation {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-2000px); }
         }
     </style>
 </head>
 <body>
-    <h1>Interactive Spooky Jack-o'-Lantern Pet</h1>
+    <h1>Happy Halloween Everyone</h1>
     <div class="jackolantern-container">
-        <div class="jackolantern" onclick="interactWithJack()">🎃</div>
+        <div class="jackolantern" onclick="interactWithJack()">🎃
+            <div class="status-popup" id="status-text">Click me to play!</div>
+        </div>
+        <div class="fog-overlay"></div>
     </div>
-    <div class="status" id="status-text">Click me to play!</div>
-
-    <audio id="jackolantern-sound" src="/sound/jackolantern"></audio>
-
+    <div id="countdown" style="color: white; font-size: 30px; position: absolute; top: 10px; right: 10px;"></div>
+    <audio id="jackolantern-sound" src="/sounds/ScaryLaugh.mp3"></audio>
+    <audio id="background-music" src="/sounds/BackgroundEerieMusic.mp3" loop></audio>
+    <script src="/socket.io/socket.io.js"></script>
     <script>
+        const jack = document.querySelector('.jackolantern');
+        const statusText = document.getElementById('status-text');
         let interactionCount = 0;
         let position = 0;
-        let direction = 1; // 1 for moving right, -1 for moving left
-        const speed = 2; // Speed of horizontal movement
+        let direction = 1;
+        const speed = 2;
 
-        const jack = document.querySelector('.jackolantern');
-        const container = document.querySelector('.jackolantern-container');
+        // Play background music on user interaction
+        document.addEventListener('click', () => {
+            const backgroundMusic = document.getElementById('background-music');
+            if (backgroundMusic.paused) {
+                backgroundMusic.play().catch(error => {
+                    console.error('Autoplay prevented:', error);
+                });
+            }
+        });
 
+        // Move Jack-o'-Lantern
         function moveJack() {
+            const container = document.querySelector('.jackolantern-container');
             const containerWidth = container.offsetWidth;
             const jackWidth = jack.offsetWidth;
-            
-            // Update position
             position += speed * direction;
-            
-            // Reverse direction if Jack reaches the edge
             if (position + jackWidth >= containerWidth || position <= 0) {
                 direction *= -1;
             }
-
-            // Apply the position
             jack.style.left = position + 'px';
-
-            // Call the function repeatedly for smooth movement
+            if (Math.random() < 0.01) triggerRandomAction();
             requestAnimationFrame(moveJack);
+        }
+
+        function triggerRandomAction() {
+            const randomAction = Math.floor(Math.random() * 4);
+            switch (randomAction) {
+                case 0:
+                    jack.style.transform = 'translateY(-50%) rotate(360deg)';
+                    updateStatus("Jack-o'-Lantern spins around!");
+                    setTimeout(() => jack.style.transform = 'translateY(-50%)', 300);
+                    break;
+                case 1:
+                    jack.style.transform = 'translateY(-60%)';
+                    updateStatus("Jack-o'-Lantern jumps with joy!");
+                    setTimeout(() => jack.style.transform = 'translateY(-50%)', 300);
+                    break;
+                case 2:
+                    jack.innerText = "🎃";
+                    updateStatus("Jack-o'-Lantern winks at you!");
+                    setTimeout(() => {
+                        jack.innerText = "🎃";
+                        updateStatus("Click me to play!");
+                    }, 2000);
+                    break;
+                case 3:
+                    updateStatus("Jack-o'-Lantern shivers in fear!");
+                    break;
+            }
         }
 
         function interactWithJack() {
             const audio = document.getElementById('jackolantern-sound');
-
-            // Play the sound
             audio.play();
-
             interactionCount++;
-
-            // Make Jack-o'-Lantern bounce
-            jack.style.transform = 'scale(1.2)';
-            setTimeout(() => jack.style.transform = 'scale(1)', 300);
-
-            // Change expression using only Jack-o'-Lantern emojis
-            if (interactionCount % 3 === 0) {
-                updateStatus("Jack-o'-Lantern is happy!");
-                jack.innerText = "🎃"; // Keep the same emoji but with a message
-            } else if (interactionCount % 5 === 0) {
-                updateStatus("Jack-o'-Lantern feels spooky!");
-                jack.innerText = "🎃"; // Same emoji, different status
-            } else {
-                updateStatus("Jack-o'-Lantern winks at you!");
-                jack.innerText = "🎃"; // Same emoji, playful status
-            }
-
-            // Revert to original Jack-o'-Lantern face after 2 seconds
-            setTimeout(() => {
-                jack.innerText = "🎃";
-                updateStatus("Click me to play!");
-            }, 2000);
+            jack.style.transform = 'translateY(-60%) scale(1.2)';
+            setTimeout(() => jack.style.transform = 'translateY(-50%) scale(1)', 300);
+            if (interactionCount % 3 === 0) updateStatus("Jack-o'-Lantern is happy!");
+            else if (interactionCount % 5 === 0) updateStatus("Jack-o'-Lantern feels spooky!");
+            else updateStatus("Jack-o'-Lantern winks at you!");
+            setTimeout(() => updateStatus("Click me to play!"), 2000);
         }
 
         function updateStatus(message) {
-            const statusText = document.getElementById('status-text');
             statusText.innerText = message;
+            statusText.style.opacity = 1;
+            setTimeout(() => statusText.style.opacity = 0, 2000);
         }
 
-        // Start moving Jack
+        // Countdown to Midnight
+        function startCountdown() {
+            const targetTime = new Date();
+            targetTime.setHours(24, 0, 0, 0);
+            setInterval(() => {
+                const currentTime = new Date();
+                const timeLeft = targetTime - currentTime;
+                const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                document.getElementById('countdown').innerText = `${hours}h ${minutes}m ${seconds}s`;
+                if (timeLeft <= 0) triggerMajorSpookyEvent();
+            }, 1000);
+        }
+
+        function triggerMajorSpookyEvent() {
+            alert("It's midnight! The spookiness begins!");
+        }
+
         moveJack();
+        startCountdown();
+
+        // Socket.io for real-time interactions
+        const socket = io();
+        socket.on('spookyEvent', (data) => {
+            console.log('Spooky event received:', data);
+            triggerRandomAction();
+        });
     </script>
 </body>
 </html>
