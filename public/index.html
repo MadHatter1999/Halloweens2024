@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Spooky Jack-o'-Lantern</title>
+    <title>Interactive Spooky Jack-o'-Lantern Pet</title>
     <link href="https://fonts.googleapis.com/css2?family=Creepster&display=swap" rel="stylesheet">
     <style>
         body {
@@ -12,47 +12,114 @@
             color: orange;
             font-family: 'Creepster', cursive;
             text-align: center;
-            margin-top: 50px;
+            overflow: hidden; /* Prevent scrollbars */
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            margin-top: 20px;
+        }
+        .jackolantern-container {
+            position: relative;
+            height: 100vh;
+            width: 100vw;
         }
         .jackolantern {
-            font-size: 100px;
-            text-shadow: 0 0 20px orange;
-            animation: flicker 1.5s infinite alternate;
+            position: absolute;
+            bottom: 50px;
+            left: 0;
+            font-size: 150px;
+            text-shadow: 0 0 25px orange;
+            animation: flicker 2s infinite alternate;
+            cursor: pointer;
+            transition: transform 0.3s;
         }
         @keyframes flicker {
-            0%, 100% { text-shadow: 0 0 20px orange; }
-            50% { text-shadow: 0 0 30px red; }
+            0%, 100% { text-shadow: 0 0 25px orange; }
+            50% { text-shadow: 0 0 35px red; }
         }
-        .button {
-            background-color: #ff7518;
-            border: none;
-            color: #000;
-            padding: 15px 30px;
-            text-decoration: none;
-            font-size: 20px;
-            margin: 20px;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.3s;
-        }
-        .button:hover {
-            background-color: #e66000;
-            transform: scale(1.1);
-            box-shadow: 0 0 15px orange;
+        .status {
+            font-size: 24px;
+            margin-top: 20px;
+            color: lightcoral;
         }
     </style>
 </head>
 <body>
-    <h1>Interactive Spooky Jack-o'-Lantern</h1>
-    <div class="jackolantern">🎃</div>
-    <button class="button" onclick="playJackOLantern()">Activate Jack-o'-Lantern</button>
+    <h1>Interactive Spooky Jack-o'-Lantern Pet</h1>
+    <div class="jackolantern-container">
+        <div class="jackolantern" onclick="interactWithJack()">🎃</div>
+    </div>
+    <div class="status" id="status-text">Click me to play!</div>
 
     <audio id="jackolantern-sound" src="/sound/jackolantern"></audio>
 
     <script>
-        function playJackOLantern() {
-            const audio = document.getElementById('jackolantern-sound');
-            audio.play();
+        let interactionCount = 0;
+        let position = 0;
+        let direction = 1; // 1 for moving right, -1 for moving left
+        const speed = 2; // Speed of horizontal movement
+
+        const jack = document.querySelector('.jackolantern');
+        const container = document.querySelector('.jackolantern-container');
+
+        function moveJack() {
+            const containerWidth = container.offsetWidth;
+            const jackWidth = jack.offsetWidth;
+            
+            // Update position
+            position += speed * direction;
+            
+            // Reverse direction if Jack reaches the edge
+            if (position + jackWidth >= containerWidth || position <= 0) {
+                direction *= -1;
+            }
+
+            // Apply the position
+            jack.style.left = position + 'px';
+
+            // Call the function repeatedly for smooth movement
+            requestAnimationFrame(moveJack);
         }
+
+        function interactWithJack() {
+            const audio = document.getElementById('jackolantern-sound');
+
+            // Play the sound
+            audio.play();
+
+            interactionCount++;
+
+            // Make Jack-o'-Lantern bounce
+            jack.style.transform = 'scale(1.2)';
+            setTimeout(() => jack.style.transform = 'scale(1)', 300);
+
+            // Change expression using only Jack-o'-Lantern emojis
+            if (interactionCount % 3 === 0) {
+                updateStatus("Jack-o'-Lantern is happy!");
+                jack.innerText = "🎃"; // Keep the same emoji but with a message
+            } else if (interactionCount % 5 === 0) {
+                updateStatus("Jack-o'-Lantern feels spooky!");
+                jack.innerText = "🎃"; // Same emoji, different status
+            } else {
+                updateStatus("Jack-o'-Lantern winks at you!");
+                jack.innerText = "🎃"; // Same emoji, playful status
+            }
+
+            // Revert to original Jack-o'-Lantern face after 2 seconds
+            setTimeout(() => {
+                jack.innerText = "🎃";
+                updateStatus("Click me to play!");
+            }, 2000);
+        }
+
+        function updateStatus(message) {
+            const statusText = document.getElementById('status-text');
+            statusText.innerText = message;
+        }
+
+        // Start moving Jack
+        moveJack();
     </script>
 </body>
 </html>
